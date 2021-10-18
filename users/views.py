@@ -1,26 +1,30 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.models import User
-from django.contrib import auth
+from django.contrib import auth, messages
 from receitasjp.models import Receita
 
 def cadastro(request):
     if request.method == 'POST':
         post = request.POST
 
-        if not post['nome'].strip():
-            print("Campo Nome está em branco.")
+        if campo_vazio(post['nome']):
+            messages.error(request, "Campo Nome está em branco.")
             return redirect('cadastro')
         
-        if not post['email'].strip():
-            print("Campo E-mail está em branco.")
+        if campo_vazio(post['email']):
+            messages.error(request, "Campo E-mail está em branco.")
             return redirect('cadastro')
 
         if post['password'] != post['password2']:
-            print("As senhas não são iguais")
+            messages.error(request, "As senhas não são iguais.")
             return redirect('cadastro')
         
-        if User.objects.filter(email=post['email']).exists() or User.objects.filter(username=post['nome']).exists():
-            print("Este e-mail já está em uso.")
+        if User.objects.filter(email=post['email']).exists():
+            messages.error(request, "Este e-mail já está em uso.")
+            return redirect('cadastro')
+        
+        if User.objects.filter(username=post['nome']).exists():
+            messages.error(request, "Usuário já cadastrado.")
             return redirect('cadastro')
         
         user = User.objects.create_user(
@@ -28,6 +32,7 @@ def cadastro(request):
             email=post['email'], 
             password=post['password'])
         user.save()
+        messages.success(request, "Usuário cadastrado com sucesso.")
 
         return redirect('login')
     else:
@@ -39,8 +44,8 @@ def login(request):
     if request.method == 'POST':
         post = request.POST
 
-        if post['email'] == "" or post['senha'] == "":
-            print("Erro ao fazer login.")
+        if campo_vazio(post['email']) or campo_vazio(post['senha']):
+            messages.error(request, "Erro ao fazer login.")
             return redirect('login')
         
         if User.objects.filter(email=post['email']).exists():
@@ -89,3 +94,6 @@ def receita_add(request):
         return redirect('dashboard')
         
     return render(request, 'users/receitas_add.html')
+
+def campo_vazio(campo):
+    return not campo.strip()
