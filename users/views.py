@@ -95,5 +95,10 @@ def receita_add(request):
         
     return render(request, 'users/receitas_add.html')
 
+def deletar_receita(request, receita_id):
+    receita = get_object_or_404(Receita, pk=receita_id)
+    receita.delete()
+    return redirect('dashboard')
+
 def campo_vazio(campo):
     return not campo.strip()
